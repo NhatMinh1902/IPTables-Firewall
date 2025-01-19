@@ -1,0 +1,64 @@
+# link: https://www.cyberciti.biz/tips/linux-iptables-examples.html
+# Displaying the Status of Your Iptables Netfilter Firewall.
+- sudo iptables -L -n -v
+
+# To display INPUT or OUTPUT chain rules.
+- sudo iptables -L INPUT -n -v
+
+# Using -F, Deleting (flushing) all the rules.
+- sudo iptables -F
+
+# Using -X, Delete chain
+- sudo iptables -X
+
+# Uing -t table_name, Select table (called nat or mangle) and delete/flush rules.
+- sudo iptables -t nat -F
+- sudo iptables -tmangle -X
+
+# Using -P, Set the default policy (such as DROP, REJECT, or ACCEPT).
+- sudo iptables -P INPUT ACCEPT
+
+# Using -D : Delete one or more rules from the selected chain.
+- sudo iptables -D INPUT 4
+
+### Create basic server protection rules:
+
+- sudo iptables -I INPUT 1 -i lo -j ACCEPT
+
+# -A: places a rule at the end of the specified chain.( -I places a rule at the beginning of the specified chain).
+# -m: This calls in an iptables module. In this case, we're calling in the conntrack module to track connection states.
+# --ctstate: The ctstate , or connection state, portion of our rule is looking for two things
+# : This stands for jump. Rules jump to a specific target, which in this case is ACCEPT .
+
+- sudo iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+# Open up port 22 so that we can connect through Secure Shell:
+- sudo iptables -A INPUT -p tcp --dport ssh -j ACCEPT
+
+# DNS: port 53 for both the TCP and the UDP protocol.
+- sudo iptables -A INPUT -p tcp --dport 53 -j ACCEPT
+- sudo iptables -A INPUT -p udp --dport 53 -j ACCEPT
+
+### Blocking ICMP with iptables
+
+# Create some rules that allow the types of ICMP messages:
+- sudo iptables -A INPUT -m conntrack -p icmp --icmp-type 3 --ctstate NEW,ESTABLISHED,RELATED -j ACCEPT
+- sudo iptables -A INPUT -m conntrack -p icmp --icmp-type 11 --ctstate NEW,ESTABLISHED,RELATED -j ACCEPT
+- sudo iptables -A INPUT -m conntrack -p icmp --icmp-type 12 --ctstate NEW,ESTABLISHED,RELATED -j ACCEPT
+
+# Deny everything else.
+- sudo iptables -A INPUT -j DROP
+....
+
+### Blocking invalid packets with iptables.
+# The first of these rules will block most of what we would consider invalid.
+# which blocks all "NEW" packets that are not"SYN" packets.
+- sudo iptables -t mangle -A PREROUTING -m conntrack --ctstate INVALID -j DROP
+- sudo iptables -t mangle -A PREROUTING -p tcp ! --syn -m conntrack --ctstate NEW -j DROP
+
+# We need to see what we've just placed into the mangle table.
+- sudo iptables -t mangle -L
+...
+
+
+
